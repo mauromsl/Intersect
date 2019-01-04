@@ -1,35 +1,36 @@
-package trello
+package trelloclient
 
 import "app/payloads"
 import "fmt"
 import "log"
 
-import trello_ "github.com/adlio/trello"
-
-//Trello Const
-const RequestURL = "https://trello.com/1/OAuthGetRequestToken"
-const AccessURL = "https://trello.com/1/OAuthGetAccessToken"
-const AuthorizeURL = "https://trello.com/1/OAuthAuthorizeToken"
-const AppName = "Intersect"
-
-const BOARD_ID = "5be17c6f3a4edf847029b4a1"
-const LIST_ID = "5be17c8d28cb843877bf7313"
+import "github.com/mauromsl/trello"
 
 type trelloClient struct {
-	*trello_.Client
+	*trello.Client
 	ListId string
 }
 
 func (c trelloClient) NewIssue(issue payloads.GithubIssue) error {
-	card := trello_.Card{
+	log.Println("Creating card for issue: #", issue.Number)
+	attachment := trello.Attachment{
+		URL: issue.HTMLURL,
+		Name: issue.Title,
+	}
+	card := trello.Card{
 		Name:     fmt.Sprintf("#%d: %s", issue.Number, issue.Title),
 		Desc:     fmt.Sprintf("url: $s", issue.HTMLURL),
 		Pos:      1,
 		IDList:   c.ListId,
-		IDLabels: []string{"5c0ea689146be2125142b36e"},
+		Attachments: []*trello.Attachment{&attachment},
 	}
-	log.Println("Creating Card:", card)
-	err := c.CreateCard(&card, trello_.Defaults())
+	log.Println("Creating Card: ", card)
+	err := c.CreateCard(&card, trello.Defaults())
+	if err != nil {
+		log.Println("Error: ", err)
+	}
+	log.Println("Attaching Github issue to card: ", card)
+	err = card.AddURLAttachment(&attachment)
 	if err != nil {
 		log.Println("Error: ", err)
 	}
@@ -49,7 +50,7 @@ func (c trelloClient) HandleAction(event payloads.IssuesEventPayload) error {
 }
 
 func NewClient(apiKey string, oauthToken string, listId string) *trelloClient {
-	client := &trelloClient{Client: trello_.NewClient(apiKey, oauthToken)}
+	client := &trelloClient{Client: trello.NewClient(apiKey, oauthToken)}
 	client.ListId = listId
 	return client
 }
