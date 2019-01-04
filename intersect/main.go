@@ -49,18 +49,18 @@ func githubIssue(response http.ResponseWriter, request *http.Request) {
 	var err error
 	decoder := json.NewDecoder(request.Body)
 	switch eventType {
-		case issueEvent:
-			var event payloads.IssuesEventPayload
-			err = decoder.Decode(&event)
-			if err != nil {
-				panic(err)
-			}
-			trelloClient.HandleAction(event)
-		case issueCommentEvent:
-			board, _ := trelloClient.GetBoard(boardId, trello_.Defaults())
-			log.Println(board)
-		default:
-			fmt.Println("Unknown")
+	case issueEvent:
+		var event payloads.IssuesEventPayload
+		err = decoder.Decode(&event)
+		if err != nil {
+			panic(err)
+		}
+		trelloClient.HandleAction(event)
+	case issueCommentEvent:
+		board, _ := trelloClient.GetBoard(boardId, trello_.Defaults())
+		log.Println(board)
+	default:
+		fmt.Println("Unknown")
 	}
 	if err != nil {
 		panic(err)
@@ -68,7 +68,7 @@ func githubIssue(response http.ResponseWriter, request *http.Request) {
 	return
 }
 
-func main () {
+func main() {
 	validateFlags()
 
 	router := mux.NewRouter()
@@ -78,7 +78,7 @@ func main () {
 		Methods("GET")
 
 	app := &http.Server{
-		Addr: "0.0.0.0:8080",
+		Addr:    "0.0.0.0:8080",
 		Handler: router,
 	}
 
@@ -90,7 +90,6 @@ func main () {
 	log.Println("Exiting")
 	os.Exit(0)
 }
-
 
 func run(app *http.Server) {
 	log.Println("Listening to requests on port 8080")
