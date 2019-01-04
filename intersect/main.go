@@ -1,8 +1,7 @@
 package main
 
 import "app/payloads"
-import "app/trello"
-import "fmt"
+import "app/trelloclient"
 import "net/http"
 import "log"
 import "os"
@@ -10,7 +9,7 @@ import "encoding/json"
 import "flag"
 import "os/signal"
 import "github.com/gorilla/mux"
-import trello_ "github.com/adlio/trello"
+import "github.com/mauromsl/trello"
 
 const issueEvent string = "issues"
 const issueCommentEvent string = "issue_comment"
@@ -43,27 +42,24 @@ func home(response http.ResponseWriter, request *http.Request) {
 }
 
 func githubIssue(response http.ResponseWriter, request *http.Request) {
-	trelloClient := trello.NewClient(apiKey, boardId, listId)
+	trelloClient := trelloclient.NewClient(apiKey, oauthToken, listId)
 	eventType := request.Header.Get("X-Github-Event")
 	log.Println("Incoming Request: ", request)
-	var err error
 	decoder := json.NewDecoder(request.Body)
 	switch eventType {
 	case issueEvent:
 		var event payloads.IssuesEventPayload
-		err = decoder.Decode(&event)
+		err := decoder.Decode(&event)
 		if err != nil {
-			panic(err)
+			syntax := err.(*json.SyntaxError)
+			log.Fatalf("Error decoding JSON: ", syntax, syntax.Offset)
 		}
 		trelloClient.HandleAction(event)
 	case issueCommentEvent:
-		board, _ := trelloClient.GetBoard(boardId, trello_.Defaults())
+		board, _ := trelloClient.GetBoard(boardId, trello.Defaults())
 		log.Println(board)
 	default:
-		fmt.Println("Unknown")
-	}
-	if err != nil {
-		panic(err)
+		log.Println("Unknown action: ", eventType)
 	}
 	return
 }
