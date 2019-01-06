@@ -7,12 +7,11 @@ all:
 	make build && make run
 image:
 	docker build -t $(APP_NAME) --no-cache .
-	@notify-send 'Image Built'
+	@notify-send 'Image Built' 2>/dev/null | true
 build:
 	docker run --rm -v "$(PWD)/$(APP_NAME)":/usr/src/myapp -w /usr/src/myapp $(APP_NAME) go build -v
-	@notify-send 'Gitersect Compiled' 2>/dev/null
+	@notify-send 'Gitersect Compiled' 2>/dev/null | true
 run:
-	bash -c "source $(PWD)/.env"
 	docker run $(MODE) -p 8080:8080 $(REMOVE) --name $(APP_NAME) -v $(PWD)/$(APP_NAME):/go/src/app \
 		--restart $(RESTART_POLICY) \
 		--entrypoint /go/src/app/myapp $(APP_NAME) \
