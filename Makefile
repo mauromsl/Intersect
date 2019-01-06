@@ -1,5 +1,8 @@
 APP_NAME=intersect
 
+RESTART_POLICY ?= no
+REMOVE ?= --rm
+MODE ?= -it
 all:
 	make build && make run
 image:
@@ -10,10 +13,16 @@ build:
 	@notify-send 'Gitersect Compiled' 2>/dev/null
 run:
 	bash -c "source $(PWD)/.env"
-	docker run -it -p 8080:8080 --rm --name $(APP_NAME) -v $(PWD)/$(APP_NAME):/go/src/app --entrypoint /go/src/app/myapp $(APP_NAME) \
-		--oauth-token $(GI_OAUTH_TOKEN) \
-		--api-key $(GI_API_KEY) \
-		--board-id $(GI_BOARD_ID) \
-		--list-id $(GI_LIST_ID)
+	docker run $(MODE) -p 8080:8080 $(REMOVE) --name $(APP_NAME) -v $(PWD)/$(APP_NAME):/go/src/app \
+		--restart $(RESTART_POLICY) \
+		--entrypoint /go/src/app/myapp $(APP_NAME) \
+			--oauth-token $(GI_OAUTH_TOKEN) \
+			--api-key $(GI_API_KEY) \
+			--board-id $(GI_BOARD_ID) \
+			--list-id $(GI_LIST_ID)
+
+daemon:
+	bash -c "make run RESTART_POLICY=always REMOVE='' MODE=-d"
+
 shell:
 	docker run -it -v $(PWD)/$(APP_NAME):/go/src/app --rm $(APP_NAME) /bin/bash
