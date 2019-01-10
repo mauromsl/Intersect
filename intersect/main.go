@@ -42,7 +42,7 @@ func home(response http.ResponseWriter, request *http.Request) {
 }
 
 func githubIssue(response http.ResponseWriter, request *http.Request) {
-	trelloClient := trelloclient.NewClient(apiKey, oauthToken, listId)
+	trelloClient := trelloclient.GetClient(apiKey, oauthToken, boardId, listId)
 	eventType := request.Header.Get("X-Github-Event")
 	log.Println("Incoming Request: ", request)
 	decoder := json.NewDecoder(request.Body)
