@@ -1,7 +1,7 @@
 FROM golang:1.11
 
 WORKDIR /go/src/app
-COPY ./intersect .
+COPY ./app .
 
 EXPOSE 8080
 

@@ -10,14 +10,14 @@ image:
 	@notify-send 'Image Built' 2>/dev/null | true
 build:
 	docker run --rm \
-		-v "$(PWD)/$(APP_NAME)":/go/src/app \
+		-v "$(PWD)/app":/go/src/app \
 		-v $(PWD)/bin:/go/bin \
 		--entrypoint=""\
 		$(APP_NAME) bash -c 'go get && go install && go build -v'
 	@notify-send 'Intersect Compiled' 2>/dev/null | true
 run:
 	docker run $(MODE) -p 8080:8080 $(REMOVE) --name $(APP_NAME) \
-		-v "$(PWD)/$(APP_NAME)":/go/src/app \
+		-v "$(PWD)/app":/go/src/app \
 		-v $(PWD)/bin:/go/bin \
 		--restart $(RESTART_POLICY) \
 		--entrypoint /go/src/app/myapp $(APP_NAME) \
