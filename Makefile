@@ -9,10 +9,16 @@ image:
 	docker build -t $(APP_NAME) --no-cache .
 	@notify-send 'Image Built' 2>/dev/null | true
 build:
-	docker run --rm -v "$(PWD)/$(APP_NAME)":/usr/src/myapp -w /usr/src/myapp $(APP_NAME) go build -v
-	@notify-send 'Gitersect Compiled' 2>/dev/null | true
+	docker run --rm \
+		-v "$(PWD)/$(APP_NAME)":/go/src/app \
+		-v $(PWD)/bin:/go/bin \
+		--entrypoint=""\
+		$(APP_NAME) bash -c 'go get && go install && go build -v'
+	@notify-send 'Intersect Compiled' 2>/dev/null | true
 run:
-	docker run $(MODE) -p 8080:8080 $(REMOVE) --name $(APP_NAME) -v $(PWD)/$(APP_NAME):/go/src/app \
+	docker run $(MODE) -p 8080:8080 $(REMOVE) --name $(APP_NAME) \
+		-v "$(PWD)/$(APP_NAME)":/go/src/app \
+		-v $(PWD)/bin:/go/bin \
 		--restart $(RESTART_POLICY) \
 		--entrypoint /go/src/app/myapp $(APP_NAME) \
 			--oauth-token $(GI_OAUTH_TOKEN) \
