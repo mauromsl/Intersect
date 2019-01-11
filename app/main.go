@@ -9,10 +9,9 @@ import "encoding/json"
 import "flag"
 import "os/signal"
 import "github.com/gorilla/mux"
-import "github.com/mauromsl/trello"
 
-const issueEvent string = "issues"
-const issueCommentEvent string = "issue_comment"
+const ISSUE_EVENT string = "issues"
+const ISSUE_COMMENT_EVENT string = "issue_comment"
 
 var apiKey string
 var oauthToken string
@@ -41,25 +40,30 @@ func home(response http.ResponseWriter, request *http.Request) {
 	response.Write([]byte(text))
 }
 
-func githubIssue(response http.ResponseWriter, request *http.Request) {
+func github(response http.ResponseWriter, request *http.Request) {
 	intersectClient := intersect.GetClient(apiKey, oauthToken, boardId, listId)
 	eventType := request.Header.Get("X-Github-Event")
 	log.Println("Incoming Request: ", request)
 	decoder := json.NewDecoder(request.Body)
 	switch eventType {
-	case issueEvent:
+	case ISSUE_EVENT:
 		var event payloads.IssuesEventPayload
 		err := decoder.Decode(&event)
 		if err != nil {
 			syntax := err.(*json.SyntaxError)
 			log.Fatalf("Error decoding JSON: ", syntax, syntax.Offset)
 		}
-		intersectClient.HandleAction(event)
-	case issueCommentEvent:
-		board, _ := intersectClient.Trello.GetBoard(boardId, trello.Defaults())
-		log.Println(board)
+		intersectClient.HandleIssue(event)
+	case ISSUE_COMMENT_EVENT:
+		var event payloads.IssueCommentPayload
+		err := decoder.Decode(&event)
+		if err != nil {
+			syntax := err.(*json.SyntaxError)
+			log.Fatalf("Error decoding JSON: ", syntax, syntax.Offset)
+		}
+		intersectClient.HandleIssueComment(event)
 	default:
-		log.Println("Unknown action: ", eventType)
+		log.Printf("Ignorig event of type: %s", eventType)
 	}
 	return
 }
@@ -68,7 +72,7 @@ func main() {
 	validateFlags()
 
 	router := mux.NewRouter()
-	router.HandleFunc("/github-issue", githubIssue).
+	router.HandleFunc("/github", github).
 		Methods("POST")
 	router.HandleFunc("/", home).
 		Methods("GET")

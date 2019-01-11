@@ -1,6 +1,7 @@
 package payloads
 
 const NEW_ISSUE = "opened"
+const NEW_ISSUE_COMMENT = "created"
 
 type IssuesEventPayload struct {
 	Action     string           `json:"action"`

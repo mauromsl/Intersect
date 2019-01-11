@@ -17,7 +17,7 @@ func (c intersectClient) NewIssue(issue payloads.GithubIssue) error {
 	}
 	card := trello.Card{
 		Name:        fmt.Sprintf("#%d: %s", issue.Number, issue.Title),
-		Desc:        fmt.Sprintf("url: %s", issue.HTMLURL),
+		Desc:        issue.Body,
 		Pos:         1,
 		IDList:      c.ListId,
 		Attachments: []*trello.Attachment{&attachment},
@@ -33,6 +33,32 @@ func (c intersectClient) NewIssue(issue payloads.GithubIssue) error {
 	err = card.AddURLAttachment(&attachment)
 	if err != nil {
 		log.Println("Error: ", err)
+	}
+	return err
+}
+
+func (c intersectClient) NewComment(comment payloads.GithubComment, issue payloads.GithubIssue) error {
+	var err error
+	if cardId, ok := c.issueCards[issue.Number]; ok {
+		card, err := c.Trello.GetCard(cardId, trello.Defaults())
+		if err == nil {
+			body := fmt.Sprintf(
+				TRELLO_COMMENT_TMPL,
+				comment.ID,
+				comment.User.Login,
+				comment.CreatedAt,
+				comment.Body,
+			)
+			log.Printf(
+				"Adding github comment on #%d to trello card: %s",
+				issue.Number, card.Name,
+			)
+			_, err = card.AddComment(body, trello.Defaults())
+		}
+	} else {
+		log.Printf("Received comment for issue that has no card: #%d", issue.Number)
+		c.NewIssue(issue)
+		c.NewComment(comment, issue)
 	}
 	return err
 }

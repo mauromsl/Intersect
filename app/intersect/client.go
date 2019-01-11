@@ -7,8 +7,6 @@ import "strconv"
 
 import "github.com/mauromsl/trello"
 
-const issuePrefixRE string = "^#[0-9]+: "
-
 type intersectClient struct {
 	Trello     *trello.Client
 	ListId     string
@@ -18,14 +16,24 @@ type intersectClient struct {
 
 var clientCache = make(map[string]*intersectClient)
 
-func (c intersectClient) HandleAction(event payloads.IssuesEventPayload) error {
+func (c intersectClient) HandleIssue(event payloads.IssuesEventPayload) error {
 	var err error
-	issue := event.Issue
 	switch event.Action {
 	case payloads.NEW_ISSUE:
-		err = c.NewIssue(issue)
+		err = c.NewIssue(event.Issue)
 	default:
-		log.Printf("Ignoring action: %s", event.Action)
+		log.Printf("Ignoring action on issue: %s", event.Action)
+	}
+	return err
+}
+
+func (c intersectClient) HandleIssueComment(event payloads.IssueCommentPayload) error {
+	var err error
+	switch event.Action {
+	case payloads.NEW_ISSUE_COMMENT:
+		err = c.NewComment(event.Comment, event.Issue)
+	default:
+		log.Printf("Ignoring action on comment: %s", event.Action)
 	}
 	return err
 }
